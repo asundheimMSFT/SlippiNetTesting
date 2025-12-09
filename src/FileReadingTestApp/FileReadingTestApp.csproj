@@ -11,4 +11,10 @@
     <ProjectReference Include="..\Slippi.NET\Slippi.NET.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="./slp/**/*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

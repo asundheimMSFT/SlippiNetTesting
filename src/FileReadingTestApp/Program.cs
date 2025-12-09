@@ -7,16 +7,13 @@ internal class Program
 {
     public static void Main()
     {
-        // Only consider files with this year in the path
-        const string yearFilter = "2025";
-
         // Filter our search to players with these connect codes.
         const string code1 = "D#10";
         const string code2 = "D#345";
 
         const bool writeLogs = true;
 
-        string slpFolder = @"Q:\Slippi";
+        string slpFolder = @"slp";
 
         // Compute the total number of times the given player has been KO'd
         int koCount = 0;
@@ -24,7 +21,7 @@ internal class Program
         int start = Environment.TickCount;
         foreach (var file in Directory.EnumerateFiles(slpFolder, searchPattern: "*", new EnumerationOptions() { RecurseSubdirectories = true }))
         {
-            if (!file.Contains(yearFilter) || Path.GetExtension(file) != ".slp")
+            if (Path.GetExtension(file) != ".slp")
             {
                 continue;
             }
@@ -43,13 +40,6 @@ internal class Program
             }
 
             fileCount++;
-
-            // Early out so this is a reasonably quick benchmark
-            if (fileCount > 30)
-            {
-                break;
-            }
-
             if (writeLogs)
             {
                 Console.Write("\r");

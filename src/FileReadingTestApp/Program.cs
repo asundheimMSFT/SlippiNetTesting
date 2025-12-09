@@ -43,6 +43,13 @@ internal class Program
             }
 
             fileCount++;
+
+            // Early out so this is a reasonably quick benchmark
+            if (fileCount > 30)
+            {
+                break;
+            }
+
             if (writeLogs)
             {
                 Console.Write("\r");

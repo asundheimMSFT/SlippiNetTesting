@@ -6,7 +6,7 @@ using Slippi.NET.Slp.Parser.Types;
 using Slippi.NET.Stats;
 using Slippi.NET.Types;
 using Slippi.NET.Tests;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TestEventStream;
 
@@ -28,7 +28,7 @@ internal class Program
         // The game mode should be online
         var game = new SlippiGame(testFile, new StatOptions());
         var settings = game.GetSettings();
-        Debug.Assert(GameMode.ONLINE == settings?.GameMode, "Should be ONLINE");
+        Assert(GameMode.ONLINE == settings?.GameMode, "Should be ONLINE");
 
         stream.OnCommand += (sender, args) =>
         {
@@ -36,23 +36,23 @@ internal class Program
             if (args.Command == Command.FRAME_BOOKEND)
             {
                 var payload = args.Payload as FrameBookendPayload;
-                Debug.Assert(payload is not null);
+                Assert(payload is not null);
 
                 var bookend = payload.FrameBookend;
-                Debug.Assert(bookend.LatestFinalizedFrame is not null, "Shouldn't emit FRAME_BOOKEND without finalizing frames");
-                Debug.Assert((int)Frames.FIRST - 1 != bookend.LatestFinalizedFrame, "Shouldn't finalize nonexistant frame");
-                Debug.Assert(bookend.LatestFinalizedFrame >= lastFinalizedFrame, "Shouldn't finalize a frame older than most recent finalized frame");
-                Debug.Assert(bookend.LatestFinalizedFrame >= bookend.Frame - SlpParser.MAX_ROLLBACK_FRAMES, "Shouldn't finalize a frame this old");
+                Assert(bookend.LatestFinalizedFrame is not null, "Shouldn't emit FRAME_BOOKEND without finalizing frames");
+                Assert((int)Frames.FIRST - 1 != bookend.LatestFinalizedFrame, "Shouldn't finalize nonexistant frame");
+                Assert(bookend.LatestFinalizedFrame >= lastFinalizedFrame, "Shouldn't finalize a frame older than most recent finalized frame");
+                Assert(bookend.LatestFinalizedFrame >= bookend.Frame - SlpParser.MAX_ROLLBACK_FRAMES, "Shouldn't finalize a frame this old");
                 lastFinalizedFrame = bookend.LatestFinalizedFrame.Value;
             }
         };
 
         parser.OnFinalizedFrame += (sender, frameEntry) =>
         {
-            Debug.Assert(frameEntry is not null);
-            Debug.Assert(frameEntry.Frame is not null);
-            Debug.Assert(parserLastFinalizedFrame != frameEntry.Frame);
-            Debug.Assert(parserLastFinalizedFrame + 1 == frameEntry.Frame);
+            Assert(frameEntry is not null);
+            Assert(frameEntry.Frame is not null);
+            Assert(parserLastFinalizedFrame != frameEntry.Frame);
+            Assert(parserLastFinalizedFrame + 1 == frameEntry.Frame);
             parserLastFinalizedFrame = frameEntry.Frame.Value;
         };
 
@@ -60,8 +60,8 @@ internal class Program
 
         // The last finalized frame should be the same as what's recorded in the metadata
         var metadata = game.GetMetadata();
-        Debug.Assert(metadata is not null);
-        Debug.Assert(metadata.LastFrame == lastFinalizedFrame);
+        Assert(metadata is not null);
+        Assert(metadata.LastFrame == lastFinalizedFrame);
     }
 
     private static void PipeFileContents(string filename, SlpEventStream destination)
@@ -85,6 +85,14 @@ internal class Program
 
                 return;
             }
+        }
+    }
+
+    private static void Assert([DoesNotReturnIf(false)] bool expected, string? message = null)
+    {
+        if (!expected)
+        {
+            throw new Exception(message);
         }
     }
 }

@@ -12,7 +12,10 @@ public readonly ref struct BufferReader
     public BufferReader(in ReadOnlySpan<byte> buffer)
     {
         _buffer = buffer;
+        this.Length = _buffer.Length;
     }
+
+    public readonly int Length;
 
     public float? ReadFloat(int offset)
     {

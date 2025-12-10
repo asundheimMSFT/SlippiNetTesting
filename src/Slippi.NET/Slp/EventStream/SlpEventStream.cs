@@ -4,6 +4,7 @@ using Slippi.NET.Slp.EventStream.Types;
 using Slippi.NET.Types;
 using Slippi.NET.Utils;
 using System.Text;
+using System.Diagnostics;
 
 namespace Slippi.NET.Slp.EventStream;
 
@@ -59,6 +60,21 @@ public class SlpEventStream
                 index += 5;
                 continue;
             }
+
+            // Rough file structure:
+            // The first 15 bytes indicate the `raw` block and length in bytes (the length is often zeroed if the file is actively being written)
+            // [U][3][r][a][w][[][$][U][#][l][X][X][X][X]
+            // The subsequent `raw` bytes are of the form [Command][Payload]
+            // where the first byte of the payload is typically the length of the payload (inclusive of that byte)
+            // Since some payload sizes are larger than a single byte, this length byte is merely a hint and ignored in favor of the declarative
+            // MESSAGE_SIZES block that indicates the real sizes for commands via ushort.
+
+            // The first command is the MESSAGE_SIZES command which is structured like
+            // [0x0]: 0x53 (MESSAGE_SIZES)
+            // [0x1]: 3N+1 Payload length, where N is the number of command (byte) - command size (short) pairs
+            // [0x1 + 3N]: Command
+            // [0x1 + 3N + 1]: First byte of the command payload length (big endian)
+            // [0x1 + 3N + 2]: Second byte of the command payload length (big endian)
 
             // Make sure we have enough data to read a full payload
             Command command = x.ReadUInt8(index).EnumCast<Command>() ?? throw new Exception("Failed to parse command from newData");
@@ -169,10 +185,12 @@ public class SlpEventStream
     {
         Dictionary<Command, int> payloadSizes = [];
         byte payloadLen = x.ReadUInt8(0) ?? 0;
+        Debug.Assert(x.Length >= payloadLen, $"Unable to read {payloadLen} bytes from buffer");
+
         for (int i = 1; i < payloadLen; i += 3)
         {
             Command command = x.ReadUInt8(i).EnumCast<Command>() ?? throw new Exception("Failed to parse command from stream");
-            ushort payloadSize = x.ReadUInt16(i + 1) ?? 0;
+            ushort payloadSize = x.ReadUInt16(i + 1) ?? throw new Exception("Failed to parse payload size from stream");
 
             payloadSizes[command] = payloadSize;
         }

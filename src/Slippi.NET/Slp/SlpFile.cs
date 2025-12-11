@@ -37,8 +37,7 @@ public class SlpFile : IDisposable
         // Generate read buffers for each message
         Dictionary<int, byte[]> commandPayloadBuffers = MessageSizes.ToDictionary(key => key.Key, value => new byte[value.Value + 1]);
 
-        Span<byte> splitMessageBuffer = stackalloc byte[1];
-
+        byte[] splitMessageBuffer = [];
         Span<byte> commandByteBuffer = stackalloc byte[1];
         while (readPosition < stopReadingAt)
         {
@@ -75,20 +74,21 @@ public class SlpFile : IDisposable
                 // seems to expect a command byte at the start
                 if (splitMessageBuffer.Length == 0)
                 {
-                    splitMessageBuffer = new byte[1] { internalCommand };
+                    splitMessageBuffer = [internalCommand];
                 }
 
                 // Collect new data into splitMessageBuffer
                 Span<byte> appendBuf = buffer.Slice(1, size);
                 Span<byte> mergedBuf = [.. splitMessageBuffer, .. appendBuf];
-                splitMessageBuffer = mergedBuf;
 
                 if (isLastMessage)
                 {
-                    commandByte = splitMessageBuffer[0]; // ?? 0 - huh?
-                    buffer = new byte[splitMessageBuffer.Length];
-                    splitMessageBuffer.CopyTo(buffer);
+                    buffer = mergedBuf.ToArray();
                     splitMessageBuffer = [];
+                }
+                else
+                {
+                    splitMessageBuffer = mergedBuf.ToArray();
                 }
             }
 

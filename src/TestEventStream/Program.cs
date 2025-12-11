@@ -68,7 +68,7 @@ internal class Program
     {
         using var readStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
 
-        const int chunkSize = 1; // This is good for validating that we buffer everything correctly
+        const int chunkSize = 1;
         Span<byte> buffer = stackalloc byte[chunkSize];
         while (readStream.Position < readStream.Length)
         {
